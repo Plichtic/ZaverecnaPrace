@@ -14,17 +14,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Graph extends JPanel {
-    private int[][] graph = new int[9][9];
+    private int numberOfNodes = 9;
+    private int[][] graph = new int[numberOfNodes][numberOfNodes];
     private int nodeRadius = 20;
     public ArrayList<Integer> shortestPath;
     private int selectedNumber1;
     private int selectedNumber2;
+    private int selectedNode;
     private int pathValue;
 
     public Graph() {
+
         JFrame frame = new JFrame("Choose Two Distinct Numbers");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 200);
+        frame.setSize(350, 200);
         frame.setLocationRelativeTo(null);
         frame.setLayout(new FlowLayout());
 
@@ -32,7 +35,15 @@ public class Graph extends JPanel {
         JComboBox<Integer> comboBox1 = new JComboBox<>(numbers);
         JComboBox<Integer> comboBox2 = new JComboBox<>(numbers);
         JButton submitButton = new JButton("Submit");
-
+        JComboBox <Integer> changeNodeButton= new JComboBox<>(numbers);
+        JButton submitNodeEdit = new JButton("Edit node");
+        submitNodeEdit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                selectedNode = (Integer) changeNodeButton.getSelectedItem()-1;
+                editNode(selectedNode);
+            }
+        });
         submitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -46,14 +57,26 @@ public class Graph extends JPanel {
                 }
             }
         });
+        JButton addNodeButton = new JButton("Add Node");
 
-        frame.add(new JLabel("Select first number:"));
+        addNodeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                addNode();
+            }
+        });
+        frame.add(new JLabel("Select node to edit:"));
+        frame.add(changeNodeButton);
+        frame.add(submitNodeEdit);
+        frame.add(new JLabel("Select first node: "));
         frame.add(comboBox1);
-        frame.add(new JLabel("Select second number:"));
+        frame.add(new JLabel("\nSelect second node: "));
         frame.add(comboBox2);
         frame.add(submitButton);
+        frame.add(addNodeButton);
 
         frame.setVisible(true);
+
     }
 
     @Override
@@ -200,4 +223,44 @@ public class Graph extends JPanel {
             }
             System.out.println("");
         }
-    }}
+    }
+    public void editNode(int node){
+        int editFrameWidth = 800;
+        int editFrameHeight = 600;
+        JFrame frame = new JFrame("Editing node "+(node+1));
+        EditingWindow editingWindow = new EditingWindow(node,graph,this,frame);
+        frame.add(editingWindow);
+
+        frame.setSize(editFrameWidth, editFrameHeight);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+
+    }
+    public void addNode() {
+        int newNumberOfNodes = numberOfNodes + 1;
+        int[][] newGraph = new int[newNumberOfNodes][newNumberOfNodes];
+
+        for (int i = 0; i < numberOfNodes; i++) {
+            for (int j = 0; j < numberOfNodes; j++) {
+                newGraph[i][j] = graph[i][j];
+            }
+        }
+
+        for (int i = 0; i < newNumberOfNodes; i++) {
+            newGraph[i][newNumberOfNodes - 1] = 0;
+            newGraph[newNumberOfNodes - 1][i] = 0;
+        }
+
+        graph = newGraph;
+        numberOfNodes = newNumberOfNodes;
+
+
+        editNode(numberOfNodes - 1);
+        repaint();
+    }
+
+
+    public int getNodeRadius() {
+        return nodeRadius;
+    }
+}

@@ -6,36 +6,38 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Graph extends JPanel {
     private int numberOfNodes = 9;
     private int[][] graph = new int[numberOfNodes][numberOfNodes];
-    private int nodeRadius = 20;
+    protected int nodeRadius = 20;
     public ArrayList<Integer> shortestPath;
     private int selectedNumber1;
     private int selectedNumber2;
     private int selectedNode;
     private int pathValue;
+    private PathWithPoints pathFinder;
+    Integer[] numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    JComboBox<Integer> comboBox1 = new JComboBox<>(numbers);
+    JComboBox<Integer> comboBox2 = new JComboBox<>(numbers);
+    JComboBox<Integer> removeNodeBox = new JComboBox<>(numbers);
+    JComboBox <Integer> changeNodeButton= new JComboBox<>(numbers);
+    private int[] values;
 
     public Graph() {
 
+
+
         JFrame frame = new JFrame("Choose Two Distinct Numbers");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(350, 200);
+        frame.setSize(410, 200);
         frame.setLocationRelativeTo(null);
         frame.setLayout(new FlowLayout());
 
-        Integer[] numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-        JComboBox<Integer> comboBox1 = new JComboBox<>(numbers);
-        JComboBox<Integer> comboBox2 = new JComboBox<>(numbers);
         JButton submitButton = new JButton("Submit");
-        JComboBox <Integer> changeNodeButton= new JComboBox<>(numbers);
         JButton submitNodeEdit = new JButton("Edit node");
         submitNodeEdit.addActionListener(new ActionListener() {
             @Override
@@ -65,6 +67,34 @@ public class Graph extends JPanel {
                 addNode();
             }
         });
+        JButton submitNodeRemove = new JButton("Remove node");
+        submitNodeRemove.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                removeNode((Integer)removeNodeBox.getSelectedItem()-1);
+            }
+        });
+        JButton saveGraph = new JButton("Save graph");
+        saveGraph.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveGraphToCSV("src/GraphPackage/NewMatice");
+            }
+        });
+        JButton pathWithPointsButton = new JButton("Path with points");
+        pathWithPointsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                selectedNumber1 = (Integer) comboBox1.getSelectedItem() - 1;
+                selectedNumber2 = (Integer) comboBox2.getSelectedItem() - 1;
+                if (selectedNumber1 != selectedNumber2) {
+                    PathWithPoints pathWithPoints = new PathWithPoints(graph,selectedNumber1,selectedNumber2,numberOfNodes);
+                } else {
+                    JOptionPane.showMessageDialog(null, "The numbers must be distinct!", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
         frame.add(new JLabel("Select node to edit:"));
         frame.add(changeNodeButton);
         frame.add(submitNodeEdit);
@@ -74,10 +104,18 @@ public class Graph extends JPanel {
         frame.add(comboBox2);
         frame.add(submitButton);
         frame.add(addNodeButton);
+        frame.add(removeNodeBox);
+        frame.add(submitNodeRemove);
+        frame.add(pathWithPointsButton);
 
         frame.setVisible(true);
 
+
+
+
+
     }
+
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -126,6 +164,7 @@ public class Graph extends JPanel {
                 g2d.draw(new Line2D.Double(x1, y1, x2, y2));
                 g2d.drawString(Integer.toString(pathValue), centerX, centerY);
             }
+
         }
 
         // Draw nodes
@@ -141,8 +180,8 @@ public class Graph extends JPanel {
         }
     }
 
-    int[] values = new int[graph.length];
     public ArrayList<Integer> dijkstras(int start, int end) {
+        values = new int[numberOfNodes];
         Arrays.fill(values, Integer.MAX_VALUE);
         int[] previousNode = new int[graph.length];
         Arrays.fill(previousNode, -1);
@@ -151,30 +190,31 @@ public class Graph extends JPanel {
         for (int i = 0; i < graph.length; i++) {
             nodes[i] = i;
         }
-        int currentnode = start;
+        int currentNode = start;
         ArrayList<Integer> connectedNodes;
-        while (currentnode != end) {
-            currentnode = smallestValue(nodes);
-            if (currentnode == -1) {
+        while (currentNode != end) {
+            currentNode = smallestValue(nodes);
+            if (currentNode == -1) {
                 return null;
             }
-            nodes[currentnode] = -1;
-            connectedNodes = getConnectedNodes(currentnode);
+            nodes[currentNode] = -1;
+            connectedNodes = getConnectedNodes(currentNode);
             for (int connectedNode : connectedNodes) {
-                if (values[connectedNode] > (values[currentnode] + getDistance(currentnode, connectedNode))) {
-                    values[connectedNode] = (values[currentnode] + getDistance(currentnode, connectedNode));
-                    previousNode[connectedNode] = currentnode;
+                if (values[connectedNode] > (values[currentNode] + getDistance(currentNode, connectedNode))) {
+                    values[connectedNode] = (values[currentNode] + getDistance(currentNode, connectedNode));
+                    previousNode[connectedNode] = currentNode;
                 }
             }
         }
-        ArrayList<Integer> shortestPath = new ArrayList<>();
-        while (currentnode != -1) {
-            shortestPath.add(0, currentnode);
-            currentnode = previousNode[currentnode];
+        ArrayList<Integer> path = new ArrayList<>();
+        while (currentNode != -1) {
+            path.add(0, currentNode);
+            currentNode = previousNode[currentNode];
         }
         pathValue=values[end];
-        return shortestPath;
+        return path;
     }
+
 
     public int smallestValue(int[] list) {
         int smallest = Integer.MAX_VALUE;
@@ -215,15 +255,6 @@ public class Graph extends JPanel {
             }
         }
     }
-
-    public void getGraph() {
-        for (int j = 0; j < graph.length; j++) {
-            for (int i = 0; i < graph.length; i++) {
-                System.out.print(graph[j][i] + " ");
-            }
-            System.out.println("");
-        }
-    }
     public void editNode(int node){
         int editFrameWidth = 800;
         int editFrameHeight = 600;
@@ -236,6 +267,7 @@ public class Graph extends JPanel {
         frame.setVisible(true);
 
     }
+
     public void addNode() {
         int newNumberOfNodes = numberOfNodes + 1;
         int[][] newGraph = new int[newNumberOfNodes][newNumberOfNodes];
@@ -250,17 +282,92 @@ public class Graph extends JPanel {
             newGraph[i][newNumberOfNodes - 1] = 0;
             newGraph[newNumberOfNodes - 1][i] = 0;
         }
+        Integer[] numbersUpdated=new Integer[newNumberOfNodes];
+        for (int i = 1;i<newNumberOfNodes+1;i++){
+            numbersUpdated[i-1]=i;
+        }
+        comboBox1.addItem(newNumberOfNodes);
+        comboBox2.addItem(newNumberOfNodes);
+        changeNodeButton.addItem(newNumberOfNodes);
+        removeNodeBox.addItem(newNumberOfNodes);
+        int[] newValues = new int[values.length+1];
+        System.arraycopy(values, 0, newValues, 0, values.length);
+        values = newValues;
 
+        numbers=numbersUpdated;
         graph = newGraph;
         numberOfNodes = newNumberOfNodes;
-
-
         editNode(numberOfNodes - 1);
         repaint();
     }
+    public void removeNode(int nodeToRemove) {
+        if (nodeToRemove < 0 || nodeToRemove >= numberOfNodes) {
+            System.out.println("Invalid node index.");
+            return;
+        }
 
+        int newNumberOfNodes = numberOfNodes - 1;
+        int[][] newGraph = new int[newNumberOfNodes][newNumberOfNodes];
 
-    public int getNodeRadius() {
-        return nodeRadius;
+        int newRow = 0, newCol;
+        for (int i = 0; i < numberOfNodes; i++) {
+            if (i == nodeToRemove) {
+                continue;
+            }
+            newCol = 0;
+            for (int j = 0; j < numberOfNodes; j++) {
+                if (j == nodeToRemove) {
+                    continue;
+                }
+                newGraph[newRow][newCol] = graph[i][j];
+                newCol++;
+            }
+            newRow++;
+        }
+
+        Integer[] numbersUpdated = new Integer[newNumberOfNodes];
+        for (int i = 0; i < newNumberOfNodes; i++) {
+            numbersUpdated[i] = i + 1;
+        }
+
+        comboBox1.removeItem(numberOfNodes);
+        comboBox2.removeItem(numberOfNodes);
+        changeNodeButton.removeItem(numberOfNodes);
+        removeNodeBox.removeItem(numberOfNodes);
+
+        int[] newValues = new int[values.length - 1];
+        int newIndex = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (i != nodeToRemove) {
+                newValues[newIndex] = values[i];
+                newIndex++;
+            }
+        }
+        values = newValues;
+
+        numbers = numbersUpdated;
+        graph = newGraph;
+        numberOfNodes = newNumberOfNodes;
+        repaint();
+    }
+    public void saveGraphToCSV(String filePath) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            for (int i = 0; i < numberOfNodes; i++) {
+                for (int j = 0; j < numberOfNodes; j++) {
+                    writer.write(Integer.toString(graph[i][j]));
+                    if (j < numberOfNodes - 1) {
+                        writer.write(",");
+                    }
+                }
+                writer.write("\n");
+            }
+            System.out.println("Graph saved to CSV file: " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int getGraph() {
+        return graph[8][7];
     }
 }

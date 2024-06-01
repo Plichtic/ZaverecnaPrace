@@ -27,6 +27,15 @@ public class PathWithPoints extends JPanel {
     private Graph dijkstrGraph;
     private ArrayList<Integer> pathNodes;
     private int pathValue;
+
+    /**
+     *
+     * @param graph Graph to show
+     * @param selectedNumber1 Start node
+     * @param selectedNumber2 End node
+     * @param numberOfNodes Number of nodes in between
+     * @param dijkstrGraph To use dijkstr
+     */
     public PathWithPoints(int[][] graph, int selectedNumber1, int selectedNumber2, int numberOfNodes,Graph dijkstrGraph) {
         this.graph = graph;
         this.numbers = new Integer[numberOfNodes];
@@ -129,6 +138,7 @@ public class PathWithPoints extends JPanel {
         frame.setVisible(true);
     }
 
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -140,7 +150,6 @@ public class PathWithPoints extends JPanel {
         double radius = Math.min(width, height) / 2.5;
         double angleIncrement = 2 * Math.PI / graph.length;
 
-        // Draw edges
         g2d.setColor(Color.BLACK);
         for (int i = 0; i < graph.length; i++) {
             for (int j = i + 1; j < graph.length; j++) {
@@ -154,7 +163,6 @@ public class PathWithPoints extends JPanel {
 
                     g2d.draw(new Line2D.Double(x1, y1, x2, y2));
 
-                    // Edge weight label
                     int labelX = (x1 + x2) / 2;
                     int labelY = (y1 + y2) / 2;
                     g2d.drawString(Integer.toString(graph[i][j]), labelX, labelY);
@@ -193,6 +201,11 @@ public class PathWithPoints extends JPanel {
 
     }
 
+    /**
+     *
+     * @param comboBox ComboBox to add items to
+     * @param number How many numbers to add
+     */
     public void addNumbersButton(JComboBox comboBox, int number) {
         for (int i = 0; i < number; i++) {
             comboBox.addItem(i + 1);

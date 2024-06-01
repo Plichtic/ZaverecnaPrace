@@ -12,6 +12,14 @@ public class EditingWindow extends JPanel {
     private JFrame frame;
     private JTextField[] textFields;
 
+    /**
+     *
+     * @param node Node you want to edit
+     * @param graph Graph which the node is in
+     * @param graphMethods Just to use dijkstr
+     * @param frame Frame to use
+     */
+
     public EditingWindow(int node, int[][] graph, Graph graphMethods, JFrame frame) {
         this.node = node;
         this.graph = graph;

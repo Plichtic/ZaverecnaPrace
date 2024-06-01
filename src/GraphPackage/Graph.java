@@ -20,7 +20,6 @@ public class Graph extends JPanel {
     private int selectedNumber2;
     private int selectedNode;
     private int pathValue;
-    private PathWithPoints pathFinder;
     Integer[] numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     JComboBox<Integer> comboBox1 = new JComboBox<>(numbers);
     JComboBox<Integer> comboBox2 = new JComboBox<>(numbers);
@@ -37,6 +36,7 @@ public class Graph extends JPanel {
 
         JButton submitButton = new JButton("Submit");
         JButton submitNodeEdit = new JButton("Edit node");
+
         submitNodeEdit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -118,7 +118,9 @@ public class Graph extends JPanel {
         double radius = Math.min(getWidth(), getHeight()) / 2.5;
         double angleIncrement = 2 * Math.PI / graph.length;
 
-        // Draw edges
+        /**
+         * Draw edges
+         */
         g2d.setColor(Color.BLACK);
         for (int i = 0; i < graph.length; i++) {
             for (int j = i + 1; j < graph.length; j++) {
@@ -139,7 +141,9 @@ public class Graph extends JPanel {
                 }
             }
         }
-
+        /**
+         * Draw the shortest path
+         */
         if (shortestPath != null) {
             g2d.setColor(Color.RED);
             g2d.setStroke(new BasicStroke(3));
@@ -158,7 +162,9 @@ public class Graph extends JPanel {
 
         }
 
-        // Draw nodes
+        /**
+         * Draw nodes
+         */
         for (int i = 0; i < graph.length; i++) {
             double angle = i * angleIncrement;
             int x = (int) (centerX + radius * Math.cos(angle));
@@ -171,28 +177,33 @@ public class Graph extends JPanel {
         }
     }
 
+    /**
+     *
+     * @param start Starting node
+     * @param end End node
+     * @return Shortest path using dijkstras algorithm
+     */
     public ArrayList<Integer> dijkstras(int start, int end) {
         try {
             values = new int[numberOfNodes];
             Arrays.fill(values, Integer.MAX_VALUE);
-            boolean[] visited = new boolean[graph.length]; // Track visited nodes
+            boolean[] visited = new boolean[graph.length];
             int[] previousNode = new int[graph.length];
             Arrays.fill(previousNode, -1);
             values[start] = 0;
 
-            // Priority Queue for efficient node selection
             PriorityQueue<Integer> queue = new PriorityQueue<>((a, b) -> values[a] - values[b]);
             queue.offer(start);
 
             while (!queue.isEmpty()) {
                 int currentnode = queue.poll();
 
-                if (currentnode == end) { // Early exit if we reach the end node
+                if (currentnode == end) {
                     break;
                 }
 
                 if (visited[currentnode]) {
-                    continue; // Skip already visited nodes
+                    continue;
                 }
 
                 visited[currentnode] = true;
@@ -202,14 +213,13 @@ public class Graph extends JPanel {
                     if (newDistance < values[connectedNode]) {
                         values[connectedNode] = newDistance;
                         previousNode[connectedNode] = currentnode;
-                        queue.offer(connectedNode); // Re-enqueue with updated distance
+                        queue.offer(connectedNode);
                     }
                 }
             }
 
-            // Check if a path to the end was found
             if (previousNode[end] == -1) {
-                return null; // No path exists
+                return null;
             }
 
             // Reconstruct path
@@ -229,7 +239,11 @@ public class Graph extends JPanel {
         return null;
     }
 
-
+    /**
+     *
+     * @param node Node you want connected nodes to
+     * @return Nodes connected to this node
+     */
     public ArrayList<Integer> getConnectedNodes(int node) {
         ArrayList<Integer> otherNodes = new ArrayList<>();
         for (int i = 0; i < graph[node].length; i++) {
@@ -257,6 +271,8 @@ public class Graph extends JPanel {
             }
         }
     }
+
+
     public void editNode(int node){
         int editFrameWidth = 800;
         int editFrameHeight = 600;
@@ -269,6 +285,10 @@ public class Graph extends JPanel {
         frame.setVisible(true);
 
     }
+
+    /**
+     * Adds node to graph
+     */
     public void addNode() {
         int newNumberOfNodes = numberOfNodes + 1;
         int[][] newGraph = new int[newNumberOfNodes][newNumberOfNodes];
@@ -301,6 +321,12 @@ public class Graph extends JPanel {
         editNode(numberOfNodes - 1);
         repaint();
     }
+
+    /**
+     *
+     * @param nodeToRemove Node you want to remove
+     * Removes this node
+     */
     public void removeNode(int nodeToRemove) {
         if (nodeToRemove < 0 || nodeToRemove >= numberOfNodes) {
             System.out.println("Invalid node index.");

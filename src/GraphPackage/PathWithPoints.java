@@ -2,7 +2,6 @@ package GraphPackage;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
@@ -22,15 +21,20 @@ public class PathWithPoints extends JPanel {
     private final int width = 800;
     private final int height = 600;
     private final Integer[] numberOfPointsBox = {1, 2, 3};
-    private int[] dist;
-    private int[] prev;
-
-    public PathWithPoints(int[][] graph, int selectedNumber1, int selectedNumber2, int numberOfNodes) {
+    private int node1;
+    private int node2;
+    private int node3;
+    private Graph dijkstrGraph;
+    private ArrayList<Integer> pathNodes;
+    private int pathValue;
+    public PathWithPoints(int[][] graph, int selectedNumber1, int selectedNumber2, int numberOfNodes,Graph dijkstrGraph) {
         this.graph = graph;
         this.numbers = new Integer[numberOfNodes];
+        this.dijkstrGraph=dijkstrGraph;
         for (int i = 0; i < numberOfNodes; i++) {
             numbers[i] = i + 1;
         }
+
 
         JFrame frame = new JFrame("Path with points");
         frame.setSize(380, 200);
@@ -72,29 +76,43 @@ public class PathWithPoints extends JPanel {
                 submitButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        if ((!Objects.equals(comboBox1.getSelectedItem(), comboBox2.getSelectedItem())) &&
-                                (!Objects.equals(comboBox1.getSelectedItem(), comboBox3.getSelectedItem())) &&
-                                (!Objects.equals(comboBox2.getSelectedItem(), comboBox3.getSelectedItem())))
-                        {
+
                             shortestPath.clear();
                             switch (numberOfPoints) {
                                 case 1:
-                                    shortestPath.add((Integer) comboBox1.getSelectedItem());
+                                    node1 = (Integer) comboBox1.getSelectedItem()-1;
+                                    shortestPath.add(node1);
                                     break;
                                 case 2:
-                                    shortestPath.add((Integer) comboBox1.getSelectedItem());
-                                    shortestPath.add((Integer) comboBox2.getSelectedItem());
+                                    node1 = (Integer) comboBox1.getSelectedItem()-1;
+                                    node2 = (Integer) comboBox2.getSelectedItem()-1;
+                                    shortestPath.add(node1);
+                                    shortestPath.add(node2);
                                     break;
                                 case 3:
-                                    shortestPath.add((Integer) comboBox1.getSelectedItem());
-                                    shortestPath.add((Integer) comboBox2.getSelectedItem());
-                                    shortestPath.add((Integer) comboBox3.getSelectedItem());
+                                    node1 = (Integer) comboBox1.getSelectedItem()-1;
+                                    node2 = (Integer) comboBox2.getSelectedItem()-1;
+                                    node3 = (Integer) comboBox3.getSelectedItem()-1;
+                                    shortestPath.add(node1);
+                                    shortestPath.add(node2);
+                                    shortestPath.add(node3);
                                     break;
                             }
-                            // findShortestPath(selectedNumber1, selectedNumber2, shortestPath);
-                        } else {
-                            JOptionPane.showMessageDialog(null, "The numbers must be distinct!", "Error", JOptionPane.ERROR_MESSAGE);
-                        }
+                            shortestPath.add(0,selectedNumber1);
+                            shortestPath.add(selectedNumber2);
+                            pathNodes = new ArrayList<>();
+                            ArrayList<Integer> helpList;
+                            pathValue=0;
+                            for(int i=0;i<shortestPath.size()-1;i++){
+                                helpList=dijkstrGraph.dijkstras(shortestPath.get(i),shortestPath.get(i+1));
+                                pathValue=pathValue+dijkstrGraph.getPathValue();
+                                for (int j=0;j< helpList.size();j++){
+                                    pathNodes.add(helpList.get(j));
+                                }
+
+                            }
+                            repaint();
+
                     }
                 });
 
@@ -110,13 +128,6 @@ public class PathWithPoints extends JPanel {
         frame.add(submitNumberOfPoints);
         frame.setVisible(true);
     }
-/*
-    public ArrayList<Integer> findShortestPath(int start,int end,ArrayList<Integer> points){
-
-    }
-
- */
-
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -151,12 +162,12 @@ public class PathWithPoints extends JPanel {
             }
         }
 
-        if (shortestPath != null) {
+        if (pathNodes != null) {
             g2d.setColor(Color.GREEN);
             g2d.setStroke(new BasicStroke(3));
-            for (int i = 0; i < shortestPath.size() - 1; i++) {
-                int node1 = shortestPath.get(i);
-                int node2 = shortestPath.get(i + 1);
+            for (int i = 0; i < pathNodes.size() - 1; i++) {
+                int node1 = pathNodes.get(i);
+                int node2 = pathNodes.get(i + 1);
                 double angle1 = node1 * angleIncrement;
                 int x1 = (int) (centerX + radius * Math.cos(angle1));
                 int y1 = (int) (centerY + radius * Math.sin(angle1));
@@ -164,6 +175,7 @@ public class PathWithPoints extends JPanel {
                 int x2 = (int) (centerX + radius * Math.cos(angle2));
                 int y2 = (int) (centerY + radius * Math.sin(angle2));
                 g2d.draw(new Line2D.Double(x1, y1, x2, y2));
+                g2d.drawString(Integer.toString(pathValue), centerX, centerY);
             }
 
         }
@@ -187,7 +199,5 @@ public class PathWithPoints extends JPanel {
         }
     }
 
+
 }
-
-
-

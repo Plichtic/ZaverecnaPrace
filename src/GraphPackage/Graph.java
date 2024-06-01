@@ -9,6 +9,7 @@ import java.awt.geom.Line2D;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.PriorityQueue;
 
 public class Graph extends JPanel {
     private int numberOfNodes = 9;
@@ -25,12 +26,9 @@ public class Graph extends JPanel {
     JComboBox<Integer> comboBox2 = new JComboBox<>(numbers);
     JComboBox<Integer> removeNodeBox = new JComboBox<>(numbers);
     JComboBox <Integer> changeNodeButton= new JComboBox<>(numbers);
-    private int[] values;
+    private int[] values = new int[numberOfNodes];
 
     public Graph() {
-
-
-
         JFrame frame = new JFrame("Choose Two Distinct Numbers");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(410, 200);
@@ -88,7 +86,7 @@ public class Graph extends JPanel {
                 selectedNumber1 = (Integer) comboBox1.getSelectedItem() - 1;
                 selectedNumber2 = (Integer) comboBox2.getSelectedItem() - 1;
                 if (selectedNumber1 != selectedNumber2) {
-                    PathWithPoints pathWithPoints = new PathWithPoints(graph,selectedNumber1,selectedNumber2,numberOfNodes);
+                    pathWithPointsCall();
                 } else {
                     JOptionPane.showMessageDialog(null, "The numbers must be distinct!", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -109,14 +107,7 @@ public class Graph extends JPanel {
         frame.add(pathWithPointsButton);
 
         frame.setVisible(true);
-
-
-
-
-
     }
-
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -181,52 +172,63 @@ public class Graph extends JPanel {
     }
 
     public ArrayList<Integer> dijkstras(int start, int end) {
-        values = new int[numberOfNodes];
-        Arrays.fill(values, Integer.MAX_VALUE);
-        int[] previousNode = new int[graph.length];
-        Arrays.fill(previousNode, -1);
-        values[start] = 0;
-        int[] nodes = new int[graph.length];
-        for (int i = 0; i < graph.length; i++) {
-            nodes[i] = i;
-        }
-        int currentNode = start;
-        ArrayList<Integer> connectedNodes;
-        while (currentNode != end) {
-            currentNode = smallestValue(nodes);
-            if (currentNode == -1) {
-                return null;
-            }
-            nodes[currentNode] = -1;
-            connectedNodes = getConnectedNodes(currentNode);
-            for (int connectedNode : connectedNodes) {
-                if (values[connectedNode] > (values[currentNode] + getDistance(currentNode, connectedNode))) {
-                    values[connectedNode] = (values[currentNode] + getDistance(currentNode, connectedNode));
-                    previousNode[connectedNode] = currentNode;
+        try {
+            values = new int[numberOfNodes];
+            Arrays.fill(values, Integer.MAX_VALUE);
+            boolean[] visited = new boolean[graph.length]; // Track visited nodes
+            int[] previousNode = new int[graph.length];
+            Arrays.fill(previousNode, -1);
+            values[start] = 0;
+
+            // Priority Queue for efficient node selection
+            PriorityQueue<Integer> queue = new PriorityQueue<>((a, b) -> values[a] - values[b]);
+            queue.offer(start);
+
+            while (!queue.isEmpty()) {
+                int currentnode = queue.poll();
+
+                if (currentnode == end) { // Early exit if we reach the end node
+                    break;
+                }
+
+                if (visited[currentnode]) {
+                    continue; // Skip already visited nodes
+                }
+
+                visited[currentnode] = true;
+
+                for (int connectedNode : getConnectedNodes(currentnode)) {
+                    int newDistance = values[currentnode] + getDistance(currentnode, connectedNode);
+                    if (newDistance < values[connectedNode]) {
+                        values[connectedNode] = newDistance;
+                        previousNode[connectedNode] = currentnode;
+                        queue.offer(connectedNode); // Re-enqueue with updated distance
+                    }
                 }
             }
-        }
-        ArrayList<Integer> path = new ArrayList<>();
-        while (currentNode != -1) {
-            path.add(0, currentNode);
-            currentNode = previousNode[currentNode];
-        }
-        pathValue=values[end];
-        return path;
-    }
 
-
-    public int smallestValue(int[] list) {
-        int smallest = Integer.MAX_VALUE;
-        int index = -1;
-        for (int i = 0; i < list.length; i++) {
-            if (list[i] < smallest && list[i] > -1) {
-                smallest = list[i];
-                index = i;
+            // Check if a path to the end was found
+            if (previousNode[end] == -1) {
+                return null; // No path exists
             }
+
+            // Reconstruct path
+            ArrayList<Integer> shortestPath = new ArrayList<>();
+            int node = end;
+            while (node != -1) {
+                shortestPath.add(0, node);
+                node = previousNode[node];
+            }
+
+            pathValue = values[end];
+            return shortestPath;
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return index;
+        return null;
     }
+
 
     public ArrayList<Integer> getConnectedNodes(int node) {
         ArrayList<Integer> otherNodes = new ArrayList<>();
@@ -267,7 +269,6 @@ public class Graph extends JPanel {
         frame.setVisible(true);
 
     }
-
     public void addNode() {
         int newNumberOfNodes = numberOfNodes + 1;
         int[][] newGraph = new int[newNumberOfNodes][newNumberOfNodes];
@@ -290,8 +291,8 @@ public class Graph extends JPanel {
         comboBox2.addItem(newNumberOfNodes);
         changeNodeButton.addItem(newNumberOfNodes);
         removeNodeBox.addItem(newNumberOfNodes);
-        int[] newValues = new int[values.length+1];
-        System.arraycopy(values, 0, newValues, 0, values.length);
+        int[] newValues = new int[numberOfNodes+1];
+        System.arraycopy(values, 0, newValues, 0, numberOfNodes);
         values = newValues;
 
         numbers=numbersUpdated;
@@ -335,9 +336,10 @@ public class Graph extends JPanel {
         changeNodeButton.removeItem(numberOfNodes);
         removeNodeBox.removeItem(numberOfNodes);
 
-        int[] newValues = new int[values.length - 1];
+
+        int[] newValues = new int[numberOfNodes - 1];
         int newIndex = 0;
-        for (int i = 0; i < values.length; i++) {
+        for (int i = 0; i < numberOfNodes; i++) {
             if (i != nodeToRemove) {
                 newValues[newIndex] = values[i];
                 newIndex++;
@@ -367,7 +369,16 @@ public class Graph extends JPanel {
         }
     }
 
-    public int getGraph() {
-        return graph[8][7];
+    public int getPathValue() {
+        return pathValue;
+    }
+    private void pathWithPointsCall(){
+        PathWithPoints pathWithPoints = new PathWithPoints(graph,selectedNumber1,selectedNumber2,numberOfNodes,this);
+        JFrame frame = new JFrame("Graph Visualization");
+        frame.add(pathWithPoints);
+        frame.setSize(800, 600);
+        frame.setLocationRelativeTo(null);
+
+        frame.setVisible(true);
     }
 }

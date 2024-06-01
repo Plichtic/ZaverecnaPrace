@@ -13,7 +13,7 @@ import java.util.PriorityQueue;
 
 public class Graph extends JPanel {
     private int numberOfNodes = 9;
-    private int[][] graph = new int[numberOfNodes][numberOfNodes];
+    protected int[][] graph = new int[numberOfNodes][numberOfNodes];
     protected int nodeRadius = 20;
     public ArrayList<Integer> shortestPath;
     private int selectedNumber1;
